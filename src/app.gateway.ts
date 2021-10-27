@@ -16,9 +16,7 @@ import { lastValueFrom } from 'rxjs';
   transports: ['websocket'],
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private httpService: HttpService) {
-    console.log(parseInt(process.env.PORT) || 4000);
-  }
+  constructor(private httpService: HttpService) {}
   handleDisconnect(client: any) {
     const user = UserOnline.getByClient(client.id);
 

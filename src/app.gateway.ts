@@ -12,7 +12,7 @@ import { HttpService } from '@nestjs/axios';
 import UserOnline from './listContact/listContact';
 import { lastValueFrom } from 'rxjs';
 
-@WebSocketGateway(81, {
+@WebSocketGateway(8081, {
   transports: ['websocket'],
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {

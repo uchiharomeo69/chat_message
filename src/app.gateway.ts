@@ -12,11 +12,13 @@ import { HttpService } from '@nestjs/axios';
 import UserOnline from './listContact/listContact';
 import { lastValueFrom } from 'rxjs';
 
-@WebSocketGateway(parseInt(process.env.PORT) || 8081, {
+@WebSocketGateway(81, {
   transports: ['websocket'],
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private httpService: HttpService) {}
+  constructor(private httpService: HttpService) {
+    console.log(parseInt(process.env.PORT) || 4000);
+  }
   handleDisconnect(client: any) {
     const user = UserOnline.getByClient(client.id);
 

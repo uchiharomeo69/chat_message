@@ -4,7 +4,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
@@ -47,7 +46,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('join')
   join(client: Socket, payload: any) {
-    const { _id, channelId } = payload.conversation;
+    const { channelId } = payload.conversation;
     client.join(channelId);
     UserOnline.pushRoom(client.id, channelId);
 
@@ -87,7 +86,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       const res = await lastValueFrom(createContact$);
       const data = res?.data?.data;
-
+      client.join(data.conversation1.conversation.channelId);
+      UserOnline.pushRoom(client.id, data.conversation1.conversation.channelId);
       const users = UserOnline.getUser(conversation?.userId2);
       users.forEach((element) => {
         this.server
@@ -153,8 +153,47 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(this.server.sockets.adapter.rooms[room]);
 
     client.join(room);
-    console.log('room', room);
 
     client.to(payload.room).emit('sharecall', { friendId: room + '' + _id });
+  }
+
+  // tao group chat
+  @SubscribeMessage('createGroup')
+  async createGroup(client: Socket, payload: any) {
+    const { members, token, creator, title } = payload;
+    const res$: any = await this.httpService.post(
+      `${process.env.GATEWAY_URL}/conversation/group`,
+      { members, creator, title },
+      {
+        headers: {
+          'x-access-token': token,
+        },
+      },
+    );
+    const { data } = await lastValueFrom(res$);
+
+    let ftitle = creator.name;
+    members.forEach((element) => {
+      ftitle += ' , ' + element.name;
+    });
+    const { conversation, rsMembers, rsCreator } = data.data;
+    client.join(conversation.channelId);
+    UserOnline.pushRoom(client.id, conversation.channelId);
+    conversation.title =
+      conversation?.title === '' || !conversation?.title
+        ? ftitle
+        : conversation.title;
+    rsMembers.forEach((element) => {
+      const users = UserOnline.getUser(element.userId);
+      users.forEach((e) => {
+        this.server
+          .to(e.clientId)
+          .emit('groudCreate', { ...element, conversation });
+      });
+    });
+    return {
+      ...rsCreator,
+      conversation,
+    };
   }
 }

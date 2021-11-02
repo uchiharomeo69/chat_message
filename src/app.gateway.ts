@@ -196,4 +196,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversation,
     };
   }
+
+  @SubscribeMessage('focusIn')
+  focusIn(client: Socket, payload: any) {
+    const { user, channelId } = payload;
+    this.server.to(channelId).emit('someOneChatting', payload);
+  }
+  @SubscribeMessage('focusOut')
+  focusOut(client: Socket, payload: any) {
+    const { user, channelId } = payload;
+
+    this.server.to(channelId).emit('someOneFinishChatting', payload);
+  }
 }
